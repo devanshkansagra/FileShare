@@ -42,8 +42,10 @@ class PeerConnection {
   }
 
   createDataChannel(label = "fileTransfer") {
-    this.dataChannel = this.peer.createDataChannel(label);
-    return this.dataChannel;
+    if (!this.dataChannel) {
+      this.dataChannel = this.peer.createDataChannel(label);
+      return this.dataChannel;
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Peer from "../server/Peer";
 import socket from "../socket";
 
@@ -6,7 +6,12 @@ export default function Upload() {
   const [files, setFiles] = useState([]);
   const [fileUrl, setFileUrl] = useState("");
   const [remoteSocketId, setRemoteSocketId] = useState("");
+  const [answer, setAnswer] = useState(null);
 
+  const filesRef = useRef([]);
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
   const handleFileChange = (e) => {
     setFiles(Array.from(e.target.files));
   };
@@ -17,27 +22,61 @@ export default function Upload() {
     socket.emit("upload-files", {
       files: files.map((f) => ({ name: f.name, size: f.size })),
     });
-
   };
 
-  const handleJoinedFileRoom = useCallback(async (socketId) => {
-    setRemoteSocketId(socketId);
-    const offer = await Peer.getOffer();
-    await Peer.setLocalDescription(new RTCSessionDescription(offer));
-    socket.emit("send-offer", { to: socketId, offer });
-  }, [socket]);
+  const datachannel = Peer.createDataChannel();
+  const handleJoinedFileRoom = useCallback(
+    async (socketId) => {
+      setRemoteSocketId(socketId);
+      const offer = await Peer.getOffer();
+      await Peer.setLocalDescription(new RTCSessionDescription(offer));
+
+      socket.emit("send-offer", { to: socketId, offer });
+    },
+    [socket]
+  );
 
   useEffect(() => {
-
-    socket.on("uploaded-files", (fileId) => {
-      const url = `http://localhost:5173/file/${fileId}`;
-      setFileUrl(url);
-    });
-
     const handleRecieveAnswer = async ({ from, answer }) => {
       console.log("Received answer from:", from);
       await Peer.setRemoteDescription(new RTCSessionDescription(answer));
+      setAnswer(answer);
     };
+    if (datachannel) {
+      datachannel.onopen = () => {
+        if (filesRef.current && Array.isArray(filesRef.current)) {
+          const file = filesRef.current;
+          const chunkSize = 1024; // 16KB per chunk
+          let offset = 0;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target.readyState !== FileReader.DONE) return;
+
+            datachannel.send(e.target.result);
+            offset += e.target.result.byteLength;
+
+            if (offset < file[0].size) {
+              readSlice(offset);
+            } else {
+              console.log("✅ File transfer complete");
+              datachannel.send("EOF"); // Signal end of file
+            }
+          };
+          const readSlice = (o) => {
+            const slice = file[0].slice(o, o + chunkSize);
+            reader.readAsArrayBuffer(slice);
+          };
+
+          readSlice(0);
+        }
+      };
+    }
+
+    socket.on("uploaded-files", (fileId) => {
+      const url = `http://172.20.10.4:5173/file/${fileId}`;
+      setFileUrl(url);
+    });
 
     socket.on("joined-file-room", handleJoinedFileRoom);
     socket.on("recieve-answer", handleRecieveAnswer);
@@ -46,7 +85,7 @@ export default function Upload() {
       socket.off("joined-file-room", handleJoinedFileRoom);
       socket.off("recieve-answer", handleRecieveAnswer);
     };
-  }, [socket, handleJoinedFileRoom]);
+  }, [socket, handleJoinedFileRoom, files, datachannel]);
 
   return (
     <div>

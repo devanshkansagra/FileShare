@@ -21,6 +21,14 @@ export default function Download({ fileId }) {
       const answer = await Peer.getAnswer(offer);
       await Peer.setLocalDescription(new RTCSessionDescription(answer));
       socket.emit("send-answer", { to: from, answer });
+
+      Peer.peer.ondatachannel = (e) => {
+        console.log("Recieved a datachannel");
+        const recievedChannel = e.channel
+        recievedChannel.onmessage = (e) => {
+          console.log(e.data);
+        }
+      }
     } catch (err) {
       console.error("Error handling offer:", err);
     }
