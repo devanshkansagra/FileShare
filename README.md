@@ -1,12 +1,33 @@
-# React + Vite
+## A simple File sharing system using WebRTC
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Installation
 
-Currently, two official plugins are available:
+- Clone the Repo
+```
+git clone https://github.com/devanshkansagra/FileShare
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Configure `.env`
+```
+mv .env.example .env
+```
 
-## Expanding the ESLint configuration
+- Install the packages 
+```
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Start Client
+```
+npm run dev
+```
+
+Optional: If wanted to run on network
+```
+npx vite --host
+```
+
+- Start Signalling Server
+```
+npm run start
+```

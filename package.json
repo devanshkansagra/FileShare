@@ -8,10 +8,11 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start" : "nodemon server/signal.js"
+    "start": "nodemon server/signal.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "http": "^0.0.1-security",
     "nodemon": "^3.1.9",

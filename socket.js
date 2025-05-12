@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-
-const socket = io("http://172.20.10.4:3001");
+const url = `${import.meta.env.VITE_HOST}:${import.meta.env.VITE_SERVER_PORT}`;
+const socket = io(url);
 
 export default socket;

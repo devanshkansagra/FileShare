@@ -8,6 +8,9 @@ export default function Upload() {
   const [remoteSocketId, setRemoteSocketId] = useState("");
   const [answer, setAnswer] = useState(null);
 
+  const url = `${import.meta.env.VITE_HOST}:${
+    import.meta.env.VITE_CLIENT_PORT
+  }`;
   const filesRef = useRef([]);
   useEffect(() => {
     filesRef.current = files;
@@ -33,7 +36,7 @@ export default function Upload() {
 
       socket.emit("send-offer", { to: socketId, offer });
     },
-    [socket]
+    [socket],
   );
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function Upload() {
       datachannel.onopen = () => {
         if (filesRef.current && Array.isArray(filesRef.current)) {
           const file = filesRef.current;
-          const chunkSize = 1024; // 16KB per chunk
+          const chunkSize = 50 * 1024; // 16KB per chunk
           let offset = 0;
 
           const reader = new FileReader();
@@ -60,7 +63,7 @@ export default function Upload() {
               readSlice(offset);
             } else {
               console.log("✅ File transfer complete");
-              datachannel.send("EOF"); // Signal end of file
+              datachannel.send(JSON.stringify({ type: "EOF" })); // Signal end of file
             }
           };
           const readSlice = (o) => {
@@ -74,8 +77,7 @@ export default function Upload() {
     }
 
     socket.on("uploaded-files", (fileId) => {
-      const url = `http://172.20.10.4:5173/file/${fileId}`;
-      setFileUrl(url);
+      setFileUrl(`${url}/file/${fileId}`);
     });
 
     socket.on("joined-file-room", handleJoinedFileRoom);
